@@ -9,6 +9,27 @@
 namespace olc {
 namespace gamestate {
 
+	class GameStateLayer
+	{
+	public:
+		GameStateLayer(uint16_t id) : m_id(id) { };
+		virtual ~GameStateLayer() { };
+		GameStateLayer(const GameStateLayer&) = delete;
+		GameStateLayer& operator=(const GameStateLayer&) = delete;
+
+	public:
+		inline uint16_t id() const { return m_id; };
+		inline bool enabled() const { return m_status; };
+		inline bool setEnabled(bool enabled) { m_status = enabled; };
+		virtual bool OnUserCreate() = 0;
+		virtual bool OnUserUpdate(float fElapsedTime) = 0;
+		virtual bool OnUserDestroy() = 0;
+
+	private:
+		uint16_t m_id;
+		bool m_status;
+	};
+
 	class GameState
 	{
 	public:
@@ -26,9 +47,52 @@ namespace gamestate {
 		virtual bool OnUserUpdate(float fElapsedTime) = 0;
 		virtual bool OnUserDestroy() = 0;
 
+	private: 
+		bool _onUserCreate() {
+			auto i = m_layers.begin();
+			bool res = true;
+			while(res && i != m_layers.end()) {
+				res = i->second->OnUserCreate();
+				++i;
+			}
+
+			// Only State can end the gameloop, layers can't
+			return OnUserCreate();
+		}
+		bool _onUserUpdate(float fElapsedTime) {
+			auto i = m_layers.begin();
+			bool res = true;
+			while(res && i != m_layers.end()) {
+				res = i->second->OnUserUpdate(fElapsedTime);
+				++i;
+			}
+
+			// Only State can end the gameloop, layers can't
+			return OnUserUpdate(fElapsedTime);
+		}
+		bool _onUserDestroy() {
+			auto i = m_layers.begin();
+			bool res = true;
+			while(res && i != m_layers.end()) {
+				res = i->second->OnUserDestroy();
+				++i;
+			}
+
+			// Only State can end the gameloop, layers can't
+			return OnUserDestroy();
+		}
+
 	private:
+		std::map<uint16_t, std::shared_ptr<GameStateLayer>> m_layers;
 		uint16_t m_id;
 		bool m_status;
+
+		// GameStateManager can call the internal update hooks which
+		// enable the multilayer updating automatically, if layers
+		// are used
+		friend bool GameStateManager::OnUserCreate();
+		friend bool GameStateManager::OnUserDestroy();
+		friend bool GameStateManager::OnUserUpdate(float fElapsedTime);
 	};
 
 	/**
@@ -45,7 +109,7 @@ namespace gamestate {
 	public: // Public interface
 		void addState(std::unique_ptr<GameState> state) {
 			// try_emplace does nothing if key already exists in the map
-			m_states.try_emplace(state->id(), std::move(state));
+			m_states.try_emplace(state->id(), state);
 		}
 
 		std::uint16_t count() const { return m_states.size(); };
@@ -89,7 +153,7 @@ namespace gamestate {
 
 
 	private:
-		std::map<uint16_t, std::unique_ptr<GameState>> m_states;
+		std::map<uint16_t, std::shared_ptr<GameState>> m_states;
 	};
 
 }
