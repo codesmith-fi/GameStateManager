@@ -149,7 +149,7 @@ StateManager
     State2
         S2layer
 
-If your State1 is active then the state will render S1Layer1 first, then S2layer.
+If your State1 is active then the state will render S1Layer1 first, then S1layer2.
 Only the active state will be rendered when GameStateManager::update() is called.
 
 --- Future improvements, feel free to do so if you want :)
@@ -184,6 +184,8 @@ This is a first version of this component so there are todo's:
 
 I hope this proves to be useful for you, if not, do not use it. Comments
 and improvement ideas are welcome.
+
+See the blog about this small project here: 
 
 --- Legal notice
 

@@ -117,6 +117,11 @@ namespace gamestate {
 		std::size_t layers() const { return m_layers.size(); };
 	public: // Public interface
 		inline uint16_t id() const { return m_id; };
+		void addLayer(std::shared_ptr<GameStateLayer> layer) {
+			// Note here we allow duplicate layers, so you can reuse
+			// your existing layers
+			m_layers.emplace_back(layer);
+		}
 
 	public: 
 		virtual bool update(float fElapsedTime) {
