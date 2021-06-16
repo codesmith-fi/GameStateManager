@@ -1,7 +1,81 @@
 /**
  * Game State System
- * Date: June 16th 2021
- * Author: Erno Pakarinen (codesmith.fi@gmail.com)
+ * Author: Erno Pakarinen
+ * Email : codesmith.fi@gmail.com
+ * Date: 16th of June 2021
+ *
+ * Implements a multiple state support to be used in applications and
+ * especially in games.
+ * 
+ * See README.md and the example project for details on how to use the 
+ * system.
+ * 
+ * GameStateManager owns and manages sub states. a GameState can be made
+ * active using the manager. Each GameState object can have zero or more 
+ * layers via derived GameStateLayer class.
+ * 
+ * For example a 2D top down space shooter game could have following setup
+ * 1) a simple setup with states but no layers
+ * 
+ * GameStateManager
+ *		StateMainMenu
+ *		StateSettings
+ *		StatePlay				<- Renders and handles all for play state
+ *		StatePause
+ *		StateCredits
+ *
+ * 2) In more complex situations the rendering could be separated into separate
+ * layer as follows:
+ * 
+ * State-layer setup:
+ * GameStateManager
+ *		StateMainMenu
+ *		StateSettings
+ *		StatePlay
+ *			LayerEntities		<- for moving entities like player and enemies
+ *			LayerParticles		<- Particle effects
+ *			LayerBackground		<- Starfields
+ *			LayerAsteroids		<- Random asteroid fields that pass by etc.
+ *			etc. etc.
+ *		StatePause
+ *		StateCredits
+ * 
+ * By separating the game logic and rendering into states and layers makes
+ * controlling the game more easier. Of course you could clump everything
+ * together in one class but that is quite hard to maintain, unreadable and
+ * quite messsy.
+ *
+ * Add your states to the GameStateManager instance, make one state active and
+ * call the GameStateManager::Update(float fTimeElapsed) to do stuff in your
+ * active state. To switch state, call activateState(id). Currently state
+ * switching is immediate but in the future I will add state transitions 
+ * controlled by the GameStateManager. This could be used for example to fade 
+ * in/out the current and incoming new state.
+ * 
+ * ------------------
+ * CSMV1.1 - Codesmith License
+ * Copyright(c) 1999 - 2021 Erno Pakarinen
+ *
+ *This licence is based on the MIT license model with very few exceptions.
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this softwareand associated documentation files(the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and /or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions :
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.Also the original
+ * author shall be credited of the work related to this Software in all
+ * software based on or using this Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
  */
 
 #ifndef __GAMESTATESYSTEM_H_DEFINED__
@@ -26,7 +100,7 @@ namespace gamestate {
 		inline uint16_t id() const { return m_id; };
 		inline bool enabled() const { return m_enabled; };
 		inline bool setEnabled(bool enabled) { m_enabled = enabled; };
-		virtual bool Update(float fElapsedTime) = 0;
+		virtual bool update(float fElapsedTime) = 0;
 
 	private:
 		uint16_t m_id;
@@ -45,11 +119,11 @@ namespace gamestate {
 		inline uint16_t id() const { return m_id; };
 
 	public: 
-		virtual bool Update(float fElapsedTime) {
+		virtual bool update(float fElapsedTime) {
 			auto i = m_layers.begin();
 			bool res = true;
 			while(res && i != m_layers.end()) {
-				res = i->get()->Update(fElapsedTime);
+				res = i->get()->update(fElapsedTime);
 				++i;
 			}
 			return true;
@@ -97,11 +171,11 @@ namespace gamestate {
 
 		std::size_t count() const { return m_states.size(); };
 
-		bool Update(float fElapsedTime) {
+		bool update(float fElapsedTime) {
 			bool res = true;
 
 			if(m_currentState) {
-				res = m_currentState->Update(fElapsedTime);
+				res = m_currentState->update(fElapsedTime);
 			}
 			return res;
 		}

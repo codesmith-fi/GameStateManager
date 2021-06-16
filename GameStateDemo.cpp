@@ -1,15 +1,28 @@
+/**
+ * Demo game application made with Pixel Game Engine (by javid9x, see the 
+ * header olcPixelGameEngine.h in pge/ folder within this project for 
+ * copyrights and license(s) of the PGE component).
+ * 
+ * The supplied GameStateSystem does not depend on PGE, all dependencies
+ * are here on the Game application side which is implemented with PGE.
+ */
+
 #include <iostream>
 #include <memory>
 
 #define OLC_PGE_APPLICATION
 #include "pge/olcPixelGameEngine.h"
+
 #include "GameStateSystem.h"
 #include "DebugLogger.h"
 
+using namespace codesmith::gamestate;
+
 /**
  * States and layers
+ * This demo does not use layers within states. Each state handles rendering 
+ * of the state.
  */
-using namespace codesmith::gamestate;
 
 class GSDStatePrimary : public GameState
 {
@@ -21,13 +34,13 @@ public:
 	};
 	GSDStatePrimary() = delete;
 	~GSDStatePrimary() = default;
-	bool Update(float fElapsedTime) {
+	bool update(float fElapsedTime) override {
 		m_pge->Clear(olc::RED);
 
-		// Cause update for all owned layers
-		GameState::Update(fElapsedTime);
+		// Cause update for all owned layers, if any
+		GameState::update(fElapsedTime);
 
-		std::string txt = "Handling state: " + std::to_string(id());
+		std::string txt = "Rendering state: " + std::to_string(id());
 		m_pge->DrawStringDecal(olc::vf2d(10.0f, 10.0f), txt);
 		return true;
 	}
@@ -47,13 +60,13 @@ public:
 
 	~GSDStateSecondary() = default;
 
-	bool Update(float fElapsedTime) {
+	bool update(float fElapsedTime) override {
 		m_pge->Clear(olc::GREEN);
 
-		// Cause update for all owned layers
-		GameState::Update(fElapsedTime);
+		// Cause update for all owned layers, if any
+		GameState::update(fElapsedTime);
 
-		std::string txt = "Handling state: " + std::to_string(id());
+		std::string txt = "Rendering state: " + std::to_string(id());
 		m_pge->DrawStringDecal(olc::vf2d(10.0f, 10.0f), txt);
 		return true;
 	}
@@ -74,14 +87,13 @@ public:
 
 	~GSDStatePause() = default;
 
-	bool Update(float fElapsedTime) {
+	bool update(float fElapsedTime) override {
 		m_pge->Clear(olc::BLUE);
 
-		// Cause update for all owned layers
-		GameState::Update(fElapsedTime);
+		// Cause update for all owned layers, if any
+		GameState::update(fElapsedTime);
 
-
-		std::string txt = "Handling state: " + std::to_string(id());
+		std::string txt = "Rendering  state: " + std::to_string(id());
 		m_pge->DrawStringDecal(olc::vf2d(10.0f, 10.0f), txt);
 		return true;
 	}
@@ -91,9 +103,9 @@ private:
 	olc::Renderable m_pauselogo;
 };
 
-
 /**
- *
+ * The game application, we use PixelGameEngine for this demo.
+ * It is great btw, thank you javidx9!
  */
 class PGEApplication : public olc::PixelGameEngine
 {
@@ -128,7 +140,10 @@ public:
 	bool OnUserUpdate(float fElapsedTime) override
 	{
 		// Update state(s)
-		bool continue_loop = m_stateManager->Update(fElapsedTime);
+		bool continue_loop = m_stateManager->update(fElapsedTime);
+
+		std::string txt = "Press F1, F2 and F3 to switch states, ESC to quit";
+		DrawStringDecal(olc::vf2d(10.0f, 25.0f), txt, olc::BLUE);
 
 		if(GetKey(olc::Key::F1).bPressed) {
 			m_stateManager->activateState(0);
