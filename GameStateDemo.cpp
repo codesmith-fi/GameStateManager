@@ -14,34 +14,81 @@ using namespace codesmith::gamestate;
 class GSDStatePrimary : public GameState
 {
 public:
-	GSDStatePrimary(uint16_t id) : GameState(id) { };
+	GSDStatePrimary(uint16_t id, olc::PixelGameEngine* pge) :
+		GameState(id), m_pge(pge) { 
+		m_background.Load("assets/desert.png");
+		LOG_INFO() << "Constructed state " << id;
+	};
+	GSDStatePrimary() = delete;
 	~GSDStatePrimary() = default;
-
 	bool Update(float fElapsedTime) {
+		m_pge->Clear(olc::RED);
+
+		// Cause update for all owned layers
+		GameState::Update(fElapsedTime);
+
+		std::string txt = "Handling state: " + std::to_string(id());
+		m_pge->DrawStringDecal(olc::vf2d(10.0f, 10.0f), txt);
 		return true;
 	}
+private:
+	olc::PixelGameEngine* m_pge;
+	olc::Renderable m_background;
 };
 
 class GSDStateSecondary : public GameState
 {
 public:
-	GSDStateSecondary(uint16_t id) : GameState(id) { };
+	GSDStateSecondary(uint16_t id, olc::PixelGameEngine* pge) :
+		GameState(id), m_pge(pge) {
+		m_background.Load("assets/snowmountain.png");
+		LOG_INFO() << "Constructed state " << id;
+	}
+
 	~GSDStateSecondary() = default;
 
 	bool Update(float fElapsedTime) {
+		m_pge->Clear(olc::GREEN);
+
+		// Cause update for all owned layers
+		GameState::Update(fElapsedTime);
+
+		std::string txt = "Handling state: " + std::to_string(id());
+		m_pge->DrawStringDecal(olc::vf2d(10.0f, 10.0f), txt);
 		return true;
 	}
+private:
+	olc::PixelGameEngine* m_pge;
+	olc::Renderable m_background;
 };
 
 class GSDStatePause: public GameState
 {
 public:
-	GSDStatePause(uint16_t id) : GameState(id) { };
+	GSDStatePause(uint16_t id, olc::PixelGameEngine* pge) :
+		GameState(id), m_pge(pge) {
+		m_background.Load("assets/desert.png");
+		m_background.Load("assets/paused.png");
+		LOG_INFO() << "Constructed state " << id;
+	}
+
 	~GSDStatePause() = default;
 
 	bool Update(float fElapsedTime) {
+		m_pge->Clear(olc::BLUE);
+
+		// Cause update for all owned layers
+		GameState::Update(fElapsedTime);
+
+
+		std::string txt = "Handling state: " + std::to_string(id());
+		m_pge->DrawStringDecal(olc::vf2d(10.0f, 10.0f), txt);
 		return true;
 	}
+private:
+	olc::PixelGameEngine* m_pge;
+	olc::Renderable m_background;
+	olc::Renderable m_pauselogo;
 };
 
 
@@ -66,9 +113,9 @@ public:
 	{
 		LOG_INFO() << "PGEApplication::OnUserCreate() initializing";
 		m_stateManager = std::make_unique<GameStateManager>();
-		auto state1 = std::make_shared<GameState>(0);
-		auto state2 = std::make_shared<GameState>(1);
-		auto state3 = std::make_shared<GameState>(2);
+		std::shared_ptr<GameState> state1 = std::make_shared<GSDStatePrimary>(0, this);
+		std::shared_ptr<GameState> state2 = std::make_shared<GSDStateSecondary>(1, this);
+		std::shared_ptr<GameState> state3 = std::make_shared<GSDStatePause>(2, this);
 		m_stateManager->addState(state1, true);
 		m_stateManager->addState(state2);
 		m_stateManager->addState(state3);
@@ -81,7 +128,7 @@ public:
 	bool OnUserUpdate(float fElapsedTime) override
 	{
 		// Update state(s)
-		m_stateManager->Update(fElapsedTime);
+		bool continue_loop = m_stateManager->Update(fElapsedTime);
 
 		if(GetKey(olc::Key::F1).bPressed) {
 			m_stateManager->activateState(0);
@@ -90,8 +137,11 @@ public:
 		} else if(GetKey(olc::Key::F3).bPressed) {
 			m_stateManager->activateState(2);
 		}
-
-		return true;
+		else if(GetKey(olc::Key::ESCAPE).bPressed) {
+			continue_loop = false;
+		}
+		
+		return continue_loop;
 	}
 
 	/**

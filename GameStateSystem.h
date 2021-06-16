@@ -110,7 +110,7 @@ namespace gamestate {
 		std::vector<std::shared_ptr<GameState>> m_states;
 		// Hard pointer used, all states are owned and the life cycle is managed 
 		// by this class.
-		GameState* m_currentState;
+		GameState* m_currentState = nullptr;
 	};
 
 } // namespace gamestate
