@@ -186,6 +186,7 @@ I hope this proves to be useful for you, if not, do not use it. Comments
 and improvement ideas are welcome.
 
 See the blog about this small project here: 
+https://codesmith.hashnode.dev/multi-state-management-in-games
 
 --- Legal notice
 
